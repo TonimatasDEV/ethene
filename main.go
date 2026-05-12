@@ -1,0 +1,35 @@
+package main
+
+import (
+	"ethene/network"
+	"log"
+	"net"
+)
+
+func main() {
+	listener, err := net.Listen("tcp", ":25565")
+
+	if err != nil {
+		log.Fatalf("Error listening: %v", err.Error())
+	}
+
+	defer listener.Close()
+
+	log.Println("Listening on :25565")
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Println("Error accepting:", err)
+			continue
+		}
+
+		session := network.NewConnection(conn)
+		go func() {
+			err := network.HandleConnection(session)
+			if err != nil {
+				print("Error handling session:", err.Error())
+			}
+		}()
+	}
+}
