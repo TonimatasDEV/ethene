@@ -28,7 +28,7 @@ func main() {
 		go func() {
 			err := network.HandleConnection(session)
 			if err != nil {
-				print("Error handling session:", err.Error())
+				log.Printf("Error handling connection: %v\n", err.Error())
 			}
 		}()
 	}
