@@ -1,7 +1,7 @@
 package handshaking
 
 import (
-	"ethene/network/util"
+	"ethene/network/buffers"
 )
 
 type HandshakePacket struct {
@@ -11,7 +11,7 @@ type HandshakePacket struct {
 	State      int32
 }
 
-func (p *HandshakePacket) Unmarshal(buffer util.NetworkBuffer) error {
+func (p *HandshakePacket) Unmarshal(buffer buffers.NetworkBuffer) error {
 	p.Version, _ = buffer.ReadVarInt()
 	p.ServerName = buffer.ReadString()
 	var port = uint16(buffer.ReadShort())

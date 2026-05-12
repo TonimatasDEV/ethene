@@ -2,8 +2,8 @@ package network
 
 import (
 	"bufio"
+	"ethene/network/buffers"
 	"ethene/network/packets"
-	"ethene/network/util"
 	"fmt"
 	"io"
 	"log"
@@ -40,10 +40,14 @@ func HandleConnection(session *Connection) error {
 	session.state = Handshake
 
 	for {
-		length, err := util.ReadVarInt(session.r)
+		length, err := buffers.ReadVarInt(session.r)
 		if err != nil {
-			log.Println("Handshake failed:", err)
-			return err
+			if err != io.EOF {
+				log.Println("Handshake failed:", err)
+				return err
+			}
+
+			return nil
 		}
 
 		payload := make([]byte, length)
@@ -61,14 +65,14 @@ func HandleConnection(session *Connection) error {
 }
 
 func (conn *Connection) SendPacket(packet packets.ServerPacket) error {
-	payloadBuffer := util.NewNetworkBufferFromBytes(make([]byte, 0))
+	payloadBuffer := buffers.NewNetworkBufferFromBytes(make([]byte, 0))
 	packet.Marshal(payloadBuffer)
 	payload := payloadBuffer.Bytes()
 
-	idLength := util.VarIntLength(packet.Id())
+	idLength := buffers.VarIntLength(packet.Id())
 	totalLength := int32(idLength + len(payload))
 
-	buffer := util.NewNetworkBufferFromBytes(make([]byte, 0))
+	buffer := buffers.NewNetworkBufferFromBytes(make([]byte, 0))
 	buffer.WriteVarInt(totalLength)
 	buffer.WriteVarInt(packet.Id())
 	buffer.WriteBytes(payload)

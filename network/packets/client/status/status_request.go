@@ -1,12 +1,12 @@
 package status
 
 import (
-	"ethene/network/util"
+	"ethene/network/buffers"
 )
 
 type RequestStatus struct {
 }
 
-func (p *RequestStatus) Unmarshal(_ util.NetworkBuffer) error {
+func (p *RequestStatus) Unmarshal(_ buffers.NetworkBuffer) error {
 	return nil
 }

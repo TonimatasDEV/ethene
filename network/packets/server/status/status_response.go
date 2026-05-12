@@ -2,7 +2,7 @@ package status
 
 import (
 	"encoding/json"
-	"ethene/network/util"
+	"ethene/network/buffers"
 	"log"
 )
 
@@ -34,7 +34,7 @@ type ResponseStatus struct {
 	EnforcesSecureChat bool                      `json:"enforcesSecureChat"`
 }
 
-func (p *ResponseStatus) Marshal(buffer util.NetworkBuffer) {
+func (p *ResponseStatus) Marshal(buffer buffers.NetworkBuffer) {
 	data, err := json.Marshal(p)
 	if err != nil {
 		log.Println(err)
