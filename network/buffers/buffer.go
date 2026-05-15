@@ -10,8 +10,9 @@ import (
 
 type NetworkBuffer interface {
 	WriteByte(value byte) error
-	WriteBytes(value []byte)
 	ReadByte() (byte, error)
+	WriteBytes(value []byte)
+	ReadBytes() []byte
 	WriteShort(value int16)
 	ReadShort() int16
 	WriteInt(value int32)
@@ -26,6 +27,8 @@ type NetworkBuffer interface {
 	ReadString() string
 	WriteVarInt(value int32)
 	ReadVarInt() (int32, error)
+	WriteBool(value bool)
+	ReadBool() bool
 	ReadUUID() uuid.UUID
 	Bytes() []byte
 }
@@ -63,10 +66,21 @@ func (b *NetworkBufferImpl) ReadByte() (byte, error) {
 }
 
 func (b *NetworkBufferImpl) WriteBytes(value []byte) {
+	length := len(value)
+	varIntLength := VarIntLength(int32(length))
+	totalLength := length + varIntLength
+
+	b.WriteVarInt(int32(totalLength))
+	b.WriteBytes(value)
+
 	_, err := b.buffer.Write(value)
 	if err != nil {
 		fmt.Println("Error writing bytes:", err)
 	}
+}
+
+func (b *NetworkBufferImpl) ReadBytes() []byte {
+	return make([]byte, 0) // TODO
 }
 
 func (b *NetworkBufferImpl) WriteShort(value int16) {
@@ -169,6 +183,22 @@ func (b *NetworkBufferImpl) ReadString() string {
 		fmt.Println("Error reading string:", err)
 	}
 	return string(value)
+}
+
+func (b *NetworkBufferImpl) WriteBool(value bool) {
+	err := binary.Write(b.buffer, binary.BigEndian, value)
+	if err != nil {
+		fmt.Println("Error writing bool:", err)
+	}
+}
+
+func (b *NetworkBufferImpl) ReadBool() bool {
+	var value bool
+	err := binary.Read(b.buffer, binary.BigEndian, &value)
+	if err != nil {
+		fmt.Println("Error reading bool:", err)
+	}
+	return value
 }
 
 func (b *NetworkBufferImpl) WriteVarInt(value int32) {
