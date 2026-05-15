@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type NetworkBuffer interface {
@@ -24,6 +26,7 @@ type NetworkBuffer interface {
 	ReadString() string
 	WriteVarInt(value int32)
 	ReadVarInt() (int32, error)
+	ReadUUID() uuid.UUID
 	Bytes() []byte
 }
 
@@ -173,6 +176,16 @@ func (b *NetworkBufferImpl) WriteVarInt(value int32) {
 	if err != nil {
 		fmt.Println("Error writing varint:", err)
 	}
+}
+
+func (b *NetworkBufferImpl) ReadUUID() uuid.UUID {
+	var value uuid.UUID
+	err := binary.Read(b.buffer, binary.BigEndian, &value)
+	if err != nil {
+		fmt.Println("Error reading uuid:", err)
+	}
+
+	return value
 }
 
 func (b *NetworkBufferImpl) Bytes() []byte {

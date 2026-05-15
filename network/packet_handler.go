@@ -4,6 +4,7 @@ import (
 	"errors"
 	"ethene/network/buffers"
 	"ethene/network/packets/client/handshaking"
+	"ethene/network/packets/client/login"
 	"ethene/network/packets/client/status"
 	status2 "ethene/network/packets/server/status"
 	"ethene/util"
@@ -92,5 +93,16 @@ func handleStatusPackets(id int32, buffer *buffers.NetworkBuffer, session *Conne
 }
 
 func handleLoginPackets(id int32, buffer *buffers.NetworkBuffer, session *Connection) error {
+	switch id {
+	case 0:
+		startLogin := login.StartLogin{}
+		if err := startLogin.Unmarshal(*buffer); err != nil {
+			return fmt.Errorf("unmarshal packet: %w", err)
+		}
+		println(startLogin.Name, startLogin.PlayerUUID.String())
+
+		return nil
+	}
+	println("unhandled packet", id)
 	return errors.New("unknown login packet id")
 }
