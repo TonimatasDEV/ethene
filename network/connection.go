@@ -21,10 +21,11 @@ const (
 )
 
 type Connection struct {
-	conn  net.Conn
-	state State
-	r     *bufio.Reader
-	w     *bufio.Writer
+	conn        net.Conn
+	state       State
+	verifyToken []byte
+	r           *bufio.Reader
+	w           *bufio.Writer
 }
 
 func NewConnection(conn net.Conn) *Connection {
@@ -75,9 +76,9 @@ func (conn *Connection) SendPacket(packet packets.ServerPacket) error {
 	buffer := buffers.NewNetworkBufferFromBytes(make([]byte, 0))
 	buffer.WriteVarInt(totalLength)
 	buffer.WriteVarInt(packet.Id())
-	buffer.WriteBytes(payload)
 
 	data := buffer.Bytes()
+	data = append(data, payload...)
 
 	if _, err := conn.w.Write(data); err != nil {
 		return err
