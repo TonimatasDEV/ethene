@@ -1,7 +1,11 @@
 package main
 
-import "ethene/server"
+import (
+	"ethene/network"
+	"ethene/server"
+)
 
 func main() {
 	server.NewMinecraftServer()
+	network.InitReceiver()
 }

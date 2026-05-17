@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 
 	"github.com/google/uuid"
 )
@@ -12,6 +13,7 @@ type NetworkBuffer interface {
 	WriteByte(value byte) error
 	ReadByte() (byte, error)
 	WriteBytes(value []byte)
+	WriteBytesWithoutLength(value []byte)
 	ReadBytes() []byte
 	WriteShort(value int16)
 	ReadShort() int16
@@ -67,11 +69,7 @@ func (b *NetworkBufferImpl) ReadByte() (byte, error) {
 
 func (b *NetworkBufferImpl) WriteBytes(value []byte) {
 	length := len(value)
-	varIntLength := VarIntLength(int32(length))
-	totalLength := length + varIntLength
-
-	b.WriteVarInt(int32(totalLength))
-	b.WriteBytes(value)
+	b.WriteVarInt(int32(length))
 
 	_, err := b.buffer.Write(value)
 	if err != nil {
@@ -79,8 +77,26 @@ func (b *NetworkBufferImpl) WriteBytes(value []byte) {
 	}
 }
 
+func (b *NetworkBufferImpl) WriteBytesWithoutLength(value []byte) {
+	_, err := b.buffer.Write(value)
+	if err != nil {
+		fmt.Println("Error writing bytes:", err)
+	}
+}
+
 func (b *NetworkBufferImpl) ReadBytes() []byte {
-	return make([]byte, 0) // TODO
+	length, err := b.ReadVarInt()
+	if err != nil {
+		fmt.Println("Error reading bytes length:", err)
+	}
+
+	value := make([]byte, length)
+	_, err = io.ReadFull(b.buffer, value)
+	if err != nil {
+		fmt.Println("Error reading bytes:", err)
+	}
+
+	return value
 }
 
 func (b *NetworkBufferImpl) WriteShort(value int16) {

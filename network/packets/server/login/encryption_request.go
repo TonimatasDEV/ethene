@@ -3,6 +3,7 @@ package login
 import (
 	"crypto/rand"
 	"ethene/network/buffers"
+	"fmt"
 )
 
 type EncryptionRequest struct {
@@ -23,8 +24,11 @@ func (p EncryptionRequest) Marshal(buffer buffers.NetworkBuffer) {
 	buffer.WriteBool(p.ShouldAuthenticate)
 }
 
-func GenerateVerifyToken(length int) ([]byte, error) {
-	token := make([]byte, length)
-	_, err := rand.Read(token)
-	return token, err
+func GenerateVerifyToken() ([]byte, error) {
+	nonce := make([]byte, 4)
+	_, err := rand.Read(nonce)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate random nonce: %w", err)
+	}
+	return nonce, nil
 }

@@ -23,6 +23,7 @@ const (
 type Connection struct {
 	conn        net.Conn
 	state       State
+	username    string
 	verifyToken []byte
 	r           *bufio.Reader
 	w           *bufio.Writer

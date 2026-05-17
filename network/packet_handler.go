@@ -1,12 +1,15 @@
 package network
 
 import (
+	"bytes"
 	"errors"
 	"ethene/network/buffers"
 	"ethene/network/packets/client/handshaking"
 	"ethene/network/packets/client/login"
 	"ethene/network/packets/client/status"
+	login2 "ethene/network/packets/server/login"
 	status2 "ethene/network/packets/server/status"
+	"ethene/server/auth"
 	"ethene/util"
 	"fmt"
 	"io"
@@ -99,8 +102,55 @@ func handleLoginPackets(id int32, buffer *buffers.NetworkBuffer, session *Connec
 		if err := startLogin.Unmarshal(*buffer); err != nil {
 			return fmt.Errorf("unmarshal packet: %w", err)
 		}
+
+		session.username = startLogin.Name
 		println(startLogin.Name, startLogin.PlayerUUID.String())
 
+		verifyToken, err := login2.GenerateVerifyToken()
+
+		if err != nil {
+			return fmt.Errorf("failed to generate verify token: %w", err)
+		}
+
+		_, public := auth.NewCrypt()
+
+		encryptRequest := login2.EncryptionRequest{
+			ServerID:           "",
+			PublicKey:          public,
+			VerifyToken:        verifyToken,
+			ShouldAuthenticate: true,
+		}
+
+		if err := session.SendPacket(&encryptRequest); err != nil {
+			return fmt.Errorf("error sending packet: %w", err)
+		}
+
+		session.verifyToken = verifyToken
+		return nil
+	case 1:
+		encryptionResponse := login.EncryptionResponse{}
+		if err := encryptionResponse.Unmarshal(*buffer); err != nil {
+			return fmt.Errorf("unmarshal packet: %w", err)
+		}
+
+		clientToken, err := auth.Decrypt(encryptionResponse.VerifyToken)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt verify token: %w", err)
+		}
+
+		if !bytes.Equal(clientToken, session.verifyToken) {
+			return fmt.Errorf("token mismatch for encryption response")
+		}
+
+		secretKey, err := auth.Decrypt(encryptionResponse.SharedSecret)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt shared secret: %w", err)
+		}
+
+		gameProfile := auth.Authenticate(secretKey, session.username)
+
+		// TODO
+		println(gameProfile)
 		return nil
 	}
 	println("unhandled packet", id)

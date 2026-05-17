@@ -1,9 +1,5 @@
 package server
 
-import (
-	"ethene/network"
-)
-
 type MinecraftServer struct {
 	PlayerList *PlayerList
 }
@@ -11,8 +7,5 @@ type MinecraftServer struct {
 func NewMinecraftServer() *MinecraftServer {
 	server := new(MinecraftServer)
 	server.PlayerList = NewPlayerList()
-
-	network.InitReceiver()
-
 	return server
 }
